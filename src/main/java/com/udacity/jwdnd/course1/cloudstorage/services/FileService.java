@@ -25,16 +25,7 @@ public class FileService {
     }
 
     public void addFile(MultipartFile multipartFile, String userName) throws IOException {
-        InputStream fis = multipartFile.getInputStream();
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int nRead;
-        byte[] data = new byte[1024];
-        while ((nRead = fis.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-        }
-        buffer.flush();
-        byte[] fileData = buffer.toByteArray();
-
+        byte[] fileData = extractFileData(multipartFile);
         String fileName = multipartFile.getOriginalFilename();
         String contentType = multipartFile.getContentType();
         String fileSize = String.valueOf(multipartFile.getSize());
@@ -49,5 +40,19 @@ public class FileService {
 
     public void deleteFile(String fileName) {
         fileMapper.deleteFile(fileName);
+    }
+
+    // New method to extract file data
+    private byte[] extractFileData(MultipartFile multipartFile) throws IOException {
+        try (InputStream fis = multipartFile.getInputStream();
+             ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            byte[] data = new byte[1024];
+            int nRead;
+            while ((nRead = fis.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            buffer.flush();
+            return buffer.toByteArray();
+        }
     }
 }

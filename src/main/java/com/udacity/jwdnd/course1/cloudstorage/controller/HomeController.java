@@ -5,12 +5,16 @@ import com.udacity.jwdnd.course1.cloudstorage.model.FileForm;
 import com.udacity.jwdnd.course1.cloudstorage.model.NoteForm;
 import com.udacity.jwdnd.course1.cloudstorage.model.User;
 import com.udacity.jwdnd.course1.cloudstorage.services.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.ContentDisposition;
 
 import java.io.IOException;
 
@@ -44,7 +48,6 @@ public class HomeController {
         model.addAttribute("notes", noteService.getNoteListings(userId));
         model.addAttribute("credentials", credentialService.getCredentialListings(userId));
         model.addAttribute("encryptionService", encryptionService);
-
         return "home";
     }
 
@@ -61,14 +64,21 @@ public class HomeController {
         String userName = authentication.getName();
         User user = userService.getUser(userName);
         Integer userId = user.getUserId();
-        String[] fileListings = fileService.getFileListings(userId);
         MultipartFile multipartFile = newFile.getFile();
+
+        if (multipartFile.isEmpty()) {
+            model.addAttribute("result", "error");
+            model.addAttribute("message", "No file selected for upload.");
+            model.addAttribute("files", fileService.getFileListings(userId));
+            return "result";
+        }
+
         String fileName = multipartFile.getOriginalFilename();
+        String[] fileListings = fileService.getFileListings(userId);
         boolean fileIsDuplicate = false;
-        for (String fileListing: fileListings) {
+        for (String fileListing : fileListings) {
             if (fileListing.equals(fileName)) {
                 fileIsDuplicate = true;
-
                 break;
             }
         }
@@ -80,7 +90,6 @@ public class HomeController {
             model.addAttribute("message", "You have tried to add a duplicate file.");
         }
         model.addAttribute("files", fileService.getFileListings(userId));
-
         return "result";
     }
 
@@ -88,9 +97,29 @@ public class HomeController {
             value = "/get-file/{fileName}",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
     )
-    public @ResponseBody
-    byte[] getFile(@PathVariable String fileName) {
-        return fileService.getFile(fileName).getFileData();
+    public ResponseEntity<byte[]> getFile(@PathVariable String fileName) {
+        com.udacity.jwdnd.course1.cloudstorage.model.File file = fileService.getFile(fileName);
+        if (file == null || file.getFileData() == null || file.getFileData().length == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        String fileType = determineFileType(fileName);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(fileType));
+        headers.setContentDisposition(ContentDisposition.builder("inline").filename(fileName).build());
+
+        return new ResponseEntity<>(file.getFileData(), headers, HttpStatus.OK);
+    }
+
+    private String determineFileType(String fileName) {
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".pdf")) {
+            return "application/pdf";
+        }
+        return "application/octet-stream"; // Other file types will trigger download
     }
 
     @GetMapping(value = "/delete-file/{fileName}")
@@ -102,7 +131,6 @@ public class HomeController {
         Integer userId = getUserId(authentication);
         model.addAttribute("files", fileService.getFileListings(userId));
         model.addAttribute("result", "success");
-
         return "result";
     }
 }

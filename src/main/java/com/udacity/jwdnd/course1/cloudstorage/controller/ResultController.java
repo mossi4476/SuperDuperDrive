@@ -8,7 +8,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/result")
 public class ResultController {
 
-    @GetMapping()
+    public ResultController() {
+        // Constructor for potential future dependencies
+    }
+
+    @GetMapping
     public String resultView() {
         return "result";
     }

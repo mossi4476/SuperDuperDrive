@@ -27,19 +27,21 @@ public class AuthenticationService implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
 
         User user = userMapper.getUser(username);
-        if (user != null) {
-            String encodedSalt = user.getSalt();
-            String hashedPassword = hashService.getHashedValue(password, encodedSalt);
-            if (user.getPassword().equals(hashedPassword)) {
-                return new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
-            }
+        if (user != null && isPasswordValid(user, password)) {
+            return new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
         }
 
         return null;
     }
 
+    private boolean isPasswordValid(User user, String password) {
+        String encodedSalt = user.getSalt();
+        String hashedPassword = hashService.getHashedValue(password, encodedSalt);
+        return user.getPassword().equals(hashedPassword);
+    }
+
     @Override
     public boolean supports(Class<?> authentication) {
-        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }

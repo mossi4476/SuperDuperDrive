@@ -40,15 +40,15 @@ class CloudStorageApplicationTests {
 	protected HomePage signUpAndLogin() {
 		driver.get("http://localhost:" + this.port + "/signup");
 		SignupPage signupPage = new SignupPage(driver);
-		signupPage.setFirstName("John");
-		signupPage.setLastName("Lennon");
-		signupPage.setUserName("lennon");
-		signupPage.setPassword("julia");
+		signupPage.setFirstName("Paul");
+		signupPage.setLastName("McCartney");
+		signupPage.setUserName("mccartney");
+		signupPage.setPassword("yesterday");
 		signupPage.signUp();
 		driver.get("http://localhost:" + this.port + "/login");
 		LoginPage loginPage = new LoginPage(driver);
-		loginPage.setUserName("lennon");
-		loginPage.setPassword("julia");
+		loginPage.setUserName("mccartney");
+		loginPage.setPassword("yesterday");
 		loginPage.login();
 
 		return new HomePage(driver);

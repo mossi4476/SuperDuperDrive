@@ -16,7 +16,7 @@ public class CredentialService {
     }
 
     public void addCredential(String url, String userName, String credentialUserName, String key, String password) {
-        Integer userId = userMapper.getUser(userName).getUserId();
+        Integer userId = getUserId(userName);
         Credential credential = new Credential(0, url, credentialUserName, key, password, userId);
         credentialMapper.insert(credential);
     }
@@ -25,15 +25,20 @@ public class CredentialService {
         return credentialMapper.getCredentialListings(userId);
     }
 
-    public Credential getCredential(Integer noteId) {
-        return credentialMapper.getCredential(noteId);
+    public Credential getCredential(Integer credentialId) {
+        return credentialMapper.getCredential(credentialId);
     }
 
-    public void deleteCredential(Integer noteId) {
-        credentialMapper.deleteCredential(noteId);
+    public void deleteCredential(Integer credentialId) {
+        credentialMapper.deleteCredential(credentialId);
     }
 
     public void updateCredential(Integer credentialId, String newUserName, String url, String key, String password) {
         credentialMapper.updateCredential(credentialId, newUserName, url, key, password);
+    }
+
+    // New method to get user ID
+    private Integer getUserId(String userName) {
+        return userMapper.getUser(userName).getUserId();
     }
 }
